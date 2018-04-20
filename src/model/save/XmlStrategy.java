@@ -12,13 +12,16 @@ import java.util.ArrayList;
 public class XmlStrategy implements ISaveNLoadStrategy {
 
     private Application application = Application.getInstance();
-    private ArrayList<Shape> shapes = application.getShapes();
 
     public void save (String fileName) {
 
+        /* 1. Initialize the serializer. */
         XStream xStream = new XStream(new StaxDriver());
-        String xml = xStream.toXML(shapes);
 
+        /* 2. Generate the XML string. */
+        String xml = xStream.toXML(application.getShapes());
+
+        /* 3. Print the XML string into a file with the given file name. */
         try {
             PrintWriter writer = new PrintWriter(fileName);
             writer.write(xml);
@@ -30,11 +33,17 @@ public class XmlStrategy implements ISaveNLoadStrategy {
 
     public void load(String fileName) {
 
+        /* 1. Initialize and open the stream. */
         XStream xStream = new XStream(new StaxDriver());
-
         File xmlFile = new File(fileName);
 
-        shapes = (ArrayList<Shape>) xStream.fromXML(xmlFile);
+        /* 2. Refill the shapes list. */
+        application.getShapes().clear();
+        application.getShapes().addAll((ArrayList<Shape>) xStream.fromXML(xmlFile));
+
+        /* 3. Refresh the canvas. */
+        application.refresh(application.getCanvas());
+
     }
 
 }

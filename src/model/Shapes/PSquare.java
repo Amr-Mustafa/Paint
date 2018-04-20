@@ -1,7 +1,5 @@
 package model.Shapes;
 
-import model.interfaces.IShape;
-
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
