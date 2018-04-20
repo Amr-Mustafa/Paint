@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <java version="1.8.0_161" class="java.beans.XMLDecoder">
- <object class="M.Shape" id="Shape0">
+ <object class="model.Shape" id="Shape0">
   <void id="PCircle0" property="currentState">
    <void property="properties">
     <void method="put">
