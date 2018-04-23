@@ -1,5 +1,8 @@
 package model;
 
+import com.thoughtworks.xstream.mapper.Mapper;
+import javafx.scene.control.TreeView;
+import model.Shapes.IShape;
 import model.commands.UpdateShapeCommand;
 import model.commands.AddShapeCommand;
 import model.commands.Command;
@@ -8,7 +11,12 @@ import model.commands.RemoveShapeCommand;
 import model.save.ISaveNLoadStrategy;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import sun.tools.jar.resources.jar;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -17,8 +25,44 @@ public class Application implements IDrawingEngine {
 
     private Canvas canvas;
 
+    private static URL[] classPath;
+
+    static {
+        try {
+            classPath = new URL[] {new URL("file:///C:\\Users\\amrmu\\Paint\\src\\plugins\\cylinder.jar")};
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    public void loadPlugin (String pluginName) {
+
+        URLClassLoader classLoader = new URLClassLoader(classPath);
+
+        Class loadedShape = null;
+
+        try {
+            loadedShape = classLoader.loadClass(pluginName);
+        } catch (Exception ex) {
+            System.out.println("Exception: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        IShape shape = null;
+        try {
+            shape = (IShape) loadedShape.newInstance();
+        } catch (Exception ex) {
+            System.out.println("Exception: " + ex.getMessage());
+       }
+
+        System.out.println(shape.toString());
+    }
+
     /* List of all the shapes drawn on the canvas. */
     private ArrayList<Shape> shapes;
+
+    /* */
+    private TreeView<String> treeView;
 
     /* XmlStrategy or JsonStrategy. */
     ISaveNLoadStrategy saveNLoadstrategy;
@@ -33,6 +77,14 @@ public class Application implements IDrawingEngine {
         undoStack = new Stack<>();
         redoStack = new Stack<>();
         shapes    = new ArrayList<>();
+    }
+
+    public void setTreeView (TreeView<String> treeView) {
+        this.treeView = treeView;
+    }
+
+    public TreeView<String> getTreeView() {
+        return treeView;
     }
 
     public void setState (ArrayList<Shape> list) {
@@ -54,6 +106,11 @@ public class Application implements IDrawingEngine {
      */
     public static Application getInstance (){
         return instance;
+    }
+
+    public void pushCommand (Command command) {
+        this.undoStack.push(command);
+
     }
 
     /**
@@ -136,7 +193,7 @@ public class Application implements IDrawingEngine {
 
         /* 2. Draw all shapes. */
         for (Shape shape : shapes) {
-            DrawCommand drawCommand = new DrawCommand(shape);
+            DrawCommand drawCommand = new DrawCommand(shape.getState());
             drawCommand.execute();
         }
 

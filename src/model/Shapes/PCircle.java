@@ -53,7 +53,13 @@ public class PCircle implements IShape, java.io.Serializable {
 
     @Override
     public void setProperties(Map<String, Double> properties) {
-        this.properties = properties;
+
+        /* Clear the map. */
+        this.properties.clear();
+
+        /* Populate the map with the given map. */
+        this.properties.putAll(properties);
+
     }
 
     @Override

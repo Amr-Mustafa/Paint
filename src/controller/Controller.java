@@ -9,7 +9,9 @@ import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import model.commands.RemoveShapeCommand;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,26 @@ public class Controller implements Initializable {
 
     private Shape selectedShape = null;
     //private Shape shape;
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+
+        /* Set the canvas reference in the application singleton. */
+        application.setCanvas(MyCanvas);
+
+        /* Default start. */
+        MyMouseRadioBTN.setSelected(true);
+        CircleBTN.setSelected(true);
+
+        MyTreeView.setRoot(root);
+        MyTreeView.setShowRoot(false);
+
+        /* Indexing for shapes' names. */
+        for (int i = 0; i < 8; i++) counter[i] = 1;
+
+        /* Set the tree reference in the application singleton. */
+        application.setTreeView(MyTreeView);
+    }
 
     private void resizeShape(){
 
@@ -89,31 +111,36 @@ public class Controller implements Initializable {
             selectedShape.getProperties().replace("y2", y);
             selectedShape.erase(MyCanvas);
             selectedShape.draw(MyCanvas);
+
         }
     }
 
     public void MyCanvas_Drag(MouseEvent mouseEvent) {
 
+        /* Get the cursor's coordinates. */
         x = mouseEvent.getX();
         y = mouseEvent.getY();
 
-        if (selectedShape != null)
-        {
+        if (selectedShape != null) {
+
+            /* Get the name of the selected shape from the tree view. */
             String selectedShapeName = MyTreeView.getSelectionModel().getSelectedItem().getValue();
 
-            for (Shape current : shapesList)
-            {
-                if (current.name.trim().equals(selectedShapeName))
-                {
+            /* Get a reference to the selected shape. */
+            for (Shape current : application.getShapes()) {
+                if (current.name.trim().equals(selectedShapeName)) {
                     selectedShape = current;
                     break;
                 }
             }
 
-            if (MyHandRadioBTN.isSelected())
-            {
+            /* If the user wants to drag the selected shape. */
+            if (MyHandRadioBTN.isSelected()) {
+
+                /* Change the cursor shape. */
                 MyCanvas.setCursor(Cursor.CLOSED_HAND);
 
+                
                 if(selectedShape.getState() instanceof PTriangle
                         || selectedShape.getState() instanceof PPentagon
                         || selectedShape.getState() instanceof PHexagon)
@@ -145,10 +172,11 @@ public class Controller implements Initializable {
 
     public void MyCanvas_Press(MouseEvent mouseEvent) {
 
+        /* Get the mouse press coordinates. */
         x = mouseEvent.getX();
         y = mouseEvent.getY();
 
-
+        /* If the user wants to draw and selected the mouse radio button. */
         if (MyMouseRadioBTN.isSelected())
         {
             Shape newShape = null;
@@ -215,6 +243,7 @@ public class Controller implements Initializable {
             newShape.name = newShape.getState().getClass().getName().replace("model.Shapes.P","") + " (" + counter[index]++ + ")";
 
             shapesList.add(newShape);
+            application.getShapes().add(newShape);
 
             TreeItem<String> newItem = new TreeItem<String>(newShape.name);
             root.getChildren().add(newItem);
@@ -346,63 +375,26 @@ public class Controller implements Initializable {
         }
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void Delete_Click() {
 
-        application.setCanvas(MyCanvas);
-
-        MyMouseRadioBTN.setSelected(true);
-        CircleBTN.setSelected(true);
-
-        MyTreeView.setRoot(root);
-        MyTreeView.setShowRoot(false);
-
-        for (int i = 0; i < 8; i++) counter[i] = 1;
-
-        /*
-        try
-        {
-            PCircle circle = (PCircle) shape.clone();
-            Shape shape = new Shape(circle);
-            shape.setPosition(new Point2D(
-                    shape.getProperties().get("x") + 10, shape.getProperties().get("y") + 10));
-
-            shape.draw(MyCanvas);
-
-
-        }
-        catch (CloneNotSupportedException e)
-        {
-            e.printStackTrace();
-        }
-        */
-
-        //select first item in list
-    }
-
-    public void Delete_Click(MouseEvent mouseEvent) {
+        // System.out.println("BEFORE: " + application.getShapes().toString()); // DEBUG
 
         if (selectedShape != null)
         {
-            selectedShape.erase(MyCanvas);
+            /* 1. Instantiate a new RemoveShapeCommand object. */
+            RemoveShapeCommand removeShapeCommand = new RemoveShapeCommand(selectedShape);
 
-            // to remove from tree view
-            TreeItem<String> selectedItem = MyTreeView.getSelectionModel().getSelectedItem();
-            selectedItem.getParent().getChildren().remove(selectedItem);
+            /* 2. Execute the command. */
+            removeShapeCommand.execute();
 
-            /* Remove selected shape from the array list. */
-            application.removeShape(selectedShape);
+            /* 3. Push the command onto the undo stack. */
+            application.pushCommand(removeShapeCommand);
 
-            if (!shapesList.isEmpty()) {
-                selectedShape = shapesList.get(0);
-
-                MultipleSelectionModel msm = MyTreeView.getSelectionModel();
-                msm.select(0);
-            }
-            else selectedShape = null;
-
-            for (Shape current : shapesList) current.draw(MyCanvas);
+            /* 4. Refresh the canvas. */
+            application.refresh(application.getCanvas());
         }
+
+        // System.out.println("AFTER: " + application.getShapes().toString()); // DEBUG
 
     }
 

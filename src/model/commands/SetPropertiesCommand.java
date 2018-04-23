@@ -27,7 +27,7 @@ public class SetPropertiesCommand implements Command {
         memento = application.createMemento();
 
         /* 2. Perform the request. */
-        shape.setProperties(properties);
+        shape.getState().setProperties(properties);
 
     }
 

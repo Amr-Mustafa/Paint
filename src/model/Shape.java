@@ -1,9 +1,15 @@
 package model;
 
+import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.control.TreeItem;
 import model.Shapes.IShape;
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
+import model.commands.DrawCommand;
+import model.commands.SetPositionCommand;
+import model.commands.SetPropertiesCommand;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Shape {
@@ -13,38 +19,53 @@ public class Shape {
     private IShape currentState;
     public String name;
 
-    public boolean isChanged;
-
     public double oldX;
     public double oldY;
 
-    // initalize all these vars
-
-    public Shape(IShape currentState) {
+    public Shape (IShape currentState) {
         this.currentState = currentState;
         this.application  = Application.getInstance();
     }
 
-    /*************************************************/
+    /**
+     * Drag the shape object to the new position specified by the parameter.
+     * @param newPosition
+     */
+    public void drag (Point2D newPosition, Object canvas){
 
-    public void drag(Point2D newPosition,Object canvas){
+        /* Instantiate a new setPositionCommand object with the caller's reference to act upon and the new point. */
+        SetPositionCommand setPositionCommand = new SetPositionCommand(this, newPosition);
 
-        erase(canvas);
-        setPosition(newPosition);
+        /* Execute the request. */
+        setPositionCommand.execute();
+
+        /* Refresh the canvas to show changes. */
+        application.refresh(application.getCanvas());
 
     }
 
+    /**
+     * Resize the shape object to the size specified by the parameters.
+     * @param canvas
+     * @param width
+     * @param height
+     */
     public void resize(Object canvas, double width, double height) {
 
-        erase(canvas);
-        getProperties().replace("width", width);
-        getProperties().replace("height",height);
+        Map<String, Double> properties = new HashMap<>(this.getProperties());
+        properties.replace("width", width);
+        properties.replace("height", height);
+
+        /* Instantiate a new setPropertiesCommand object with the caller's reference to act upon and the new map. */
+        SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(this, properties);
+
+        /* Execute the request. */
+        setPropertiesCommand.execute();
+
+        /* Refresh the canvas to show changes. */
+        application.refresh(application.getCanvas());
 
     }
-
-    /*************************************************/
-
-    //region position
 
     public void setPosition(Point2D position) {
         currentState.setPosition(position);
@@ -54,12 +75,6 @@ public class Shape {
         return currentState.getPosition();
     }
 
-    //endregion
-
-    /*************************************************/
-
-    //region properties
-
     public void setProperties(Map<String, Double> properties) {
         currentState.setProperties(properties);
     }
@@ -68,11 +83,9 @@ public class Shape {
         return currentState.getProperties();
     }
 
-    //endregion
 
-    /*************************************************/
 
-    //region color
+    
 
     public void setBackColor(Color color) {
         currentState.setBackColor(color);
@@ -93,7 +106,9 @@ public class Shape {
     /*************************************************/
 
     public void draw(Object canvas) {
-        currentState.draw(canvas);
+       // currentState.draw(canvas);//create object drawCommand .. perform execute method on it
+        DrawCommand drawCommand = new DrawCommand(currentState);
+        drawCommand.execute();
     }
 
     public void erase(Object canvas){
@@ -103,7 +118,9 @@ public class Shape {
     /*************************************************/
 
     public Object clone() throws CloneNotSupportedException {
+
         return currentState.clone();
+
     }
 
     /*************************************************/
@@ -121,6 +138,10 @@ public class Shape {
         /* 1. Remove the shape from shapes list. */
         application.getShapes().remove(this);
 
+        /* 2. Remove the shape from the tree view. */
+        TreeItem<String> selectedItem = application.getTreeView().getSelectionModel().getSelectedItem();
+        selectedItem.getParent().getChildren().remove(selectedItem);
 
     }
+
 }

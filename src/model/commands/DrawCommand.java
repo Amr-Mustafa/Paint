@@ -3,14 +3,15 @@ package model.commands;
 import model.Application;
 import model.Memento;
 import model.Shape;
+import model.Shapes.IShape;
 
 public class DrawCommand implements Command {
 
-    private Shape shape;
+    private IShape shape;
     private Memento memento;
     private Application application;
 
-    public DrawCommand (Shape shape) {
+    public DrawCommand (IShape shape) {
 
         this.shape = shape;
         application = Application.getInstance();
