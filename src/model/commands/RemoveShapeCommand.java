@@ -24,6 +24,8 @@ public class RemoveShapeCommand implements Command {
         /* 2. Perform the request. */
         shape.remove(); // remove method should remove the shape from the list and refresh the canvas
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
     }
 
     @Override

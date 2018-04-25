@@ -31,6 +31,9 @@ public class UpdateShapeCommand implements Command {
 
         /* 3. Add the new shape to the shapes list. */
         application.addShape(newShape); // addShape method should add the shape to the shapes list and refresh the canvas.
+
+        /* 4. Push the command onto the undo stack. */
+        application.pushCommand(this);
     }
 
     @Override

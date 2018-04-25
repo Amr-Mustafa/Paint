@@ -29,6 +29,8 @@ public class SetPositionCommand implements Command {
         /* 2. Perform the request. */
         shape.setPosition(position);
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
     }
 
     @Override

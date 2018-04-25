@@ -31,6 +31,9 @@ public class cloneCommand implements Command {
             System.out.println("Error!");
         }
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
+
     }
 
     @Override

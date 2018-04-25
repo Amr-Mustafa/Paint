@@ -27,6 +27,8 @@ public class DrawCommand implements Command {
         /* 2. Perform the request. */
         shape.draw(application.getCanvas()); // the draw method should add the shape to the shapes list
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
     }
 
     @Override

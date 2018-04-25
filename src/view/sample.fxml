@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="823.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.Controller">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="823.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.Controller">
    <children>
       <Canvas fx:id="MyCanvas" height="200.0" layoutX="18.0" layoutY="100.0" onMouseDragged="#MyCanvas_Drag" onMousePressed="#MyCanvas_Press" onMouseReleased="#MyCanvas_Release" width="564.0" />
       <ColorPicker fx:id="MyBackColorPicker" layoutX="452.0" layoutY="18.0" />
@@ -37,6 +37,8 @@
       </HBox>
       <TreeView fx:id="MyTreeView" layoutX="620.0" layoutY="18.0" prefHeight="350.0" prefWidth="192.0" />
       <Button fx:id="DeleteBTN" layoutX="469.0" layoutY="334.0" mnemonicParsing="false" onMouseClicked="#Delete_Click" prefHeight="25.0" prefWidth="108.0" text="Delete" />
+      <Button fx:id="loadButton" layoutX="400.0" layoutY="332.0" mnemonicParsing="false" onMouseClicked="#loadClicked" text="Load" />
+      <Button fx:id="saveButton" layoutX="340.0" layoutY="332.0" mnemonicParsing="false" onMouseClicked="#saveClicked" text="Save" />
 
 
    </children>

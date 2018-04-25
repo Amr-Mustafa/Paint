@@ -29,6 +29,8 @@ public class SetFillColorCommand implements Command {
         /* 2. Perform the request. */
         shape.setBackColor(color);
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
     }
 
     @Override

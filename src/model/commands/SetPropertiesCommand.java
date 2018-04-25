@@ -29,6 +29,8 @@ public class SetPropertiesCommand implements Command {
         /* 2. Perform the request. */
         shape.getState().setProperties(properties);
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
     }
 
     @Override

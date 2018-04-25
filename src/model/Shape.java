@@ -14,7 +14,8 @@ import java.util.Map;
 
 public class Shape {
 
-    private Application application;
+    /* Make this field static to prevent serialization. */
+    private static Application application;
 
     private IShape currentState;
     public String name;
@@ -25,46 +26,6 @@ public class Shape {
     public Shape (IShape currentState) {
         this.currentState = currentState;
         this.application  = Application.getInstance();
-    }
-
-    /**
-     * Drag the shape object to the new position specified by the parameter.
-     * @param newPosition
-     */
-    public void drag (Point2D newPosition, Object canvas){
-
-        /* Instantiate a new setPositionCommand object with the caller's reference to act upon and the new point. */
-        SetPositionCommand setPositionCommand = new SetPositionCommand(this, newPosition);
-
-        /* Execute the request. */
-        setPositionCommand.execute();
-
-        /* Refresh the canvas to show changes. */
-        application.refresh(application.getCanvas());
-
-    }
-
-    /**
-     * Resize the shape object to the size specified by the parameters.
-     * @param canvas
-     * @param width
-     * @param height
-     */
-    public void resize(Object canvas, double width, double height) {
-
-        Map<String, Double> properties = new HashMap<>(this.getProperties());
-        properties.replace("width", width);
-        properties.replace("height", height);
-
-        /* Instantiate a new setPropertiesCommand object with the caller's reference to act upon and the new map. */
-        SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(this, properties);
-
-        /* Execute the request. */
-        setPropertiesCommand.execute();
-
-        /* Refresh the canvas to show changes. */
-        application.refresh(application.getCanvas());
-
     }
 
     public void setPosition(Point2D position) {
@@ -83,13 +44,10 @@ public class Shape {
         return currentState.getProperties();
     }
 
-
-
-    
-
     public void setBackColor(Color color) {
         currentState.setBackColor(color);
     }
+
     public Color getBackColor() {
         return currentState.getBackColor();
     }
@@ -97,13 +55,10 @@ public class Shape {
     public void setStrokeColor(Color color) {
         currentState.setStrokeColor(color);
     }
+
     public Color getStrokeColor() {
         return currentState.getStrokeColor();
     }
-
-    //endregion
-
-    /*************************************************/
 
     public void draw(Object canvas) {
        // currentState.draw(canvas);//create object drawCommand .. perform execute method on it
@@ -115,15 +70,11 @@ public class Shape {
         currentState.erase(canvas);
     }
 
-    /*************************************************/
-
     public Object clone() throws CloneNotSupportedException {
 
         return currentState.clone();
 
     }
-
-    /*************************************************/
 
     public IShape getState() {
         return currentState;

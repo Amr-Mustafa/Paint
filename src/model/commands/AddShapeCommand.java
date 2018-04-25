@@ -26,6 +26,9 @@ public class AddShapeCommand implements Command {
         /* 2. Perform the request. */
         application.getShapes().add(shape);
 
+        /* 3. Push the command onto the undo stack. */
+        application.pushCommand(this);
+
     }
 
     @Override

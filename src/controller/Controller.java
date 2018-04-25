@@ -9,13 +9,12 @@ import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import model.commands.RemoveShapeCommand;
+import model.commands.*;
+import model.save.XmlStrategy;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class Controller implements Initializable {
 
@@ -38,18 +37,16 @@ public class Controller implements Initializable {
     public Slider MyOpacitySlider;
     public Slider MyStrokeSlider;
 
-    Application application = Application.getInstance();
+    private Application application = Application.getInstance();
     public TreeView <String> MyTreeView;
 
     private TreeItem<String> root = new TreeItem<String>("Paint");
-    private List<Shape> shapesList = new ArrayList<>();
 
     private int []counter = new int[8];
 
     private double x, y;
 
     private Shape selectedShape = null;
-    //private Shape shape;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -71,42 +68,61 @@ public class Controller implements Initializable {
         application.setTreeView(MyTreeView);
     }
 
-    private void resizeShape(){
+    private void resizeShape() {
 
         double width,height;
 
-        if(selectedShape.getState() instanceof PCircle || selectedShape.getState() instanceof PSquare)
-        {
+        if(selectedShape.getState() instanceof PCircle || selectedShape.getState() instanceof PSquare) {
+
             width = (x - selectedShape.oldX) * 2;
             height = (x - selectedShape.oldX) * 2;
 
-            selectedShape.getProperties().replace("x", selectedShape.oldX - width / 2);
-            selectedShape.getProperties().replace("y", selectedShape.oldY - width / 2);
-            selectedShape.resize(MyCanvas, width, height);
+            Map<String, Double> properties = new HashMap<>(selectedShape.getProperties());
+            properties.replace("x", selectedShape.oldX - width / 2);
+            properties.replace("y", selectedShape.oldY - width / 2);
+            properties.replace("width", width);
+            properties.replace("height", height);
+
+            SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(selectedShape, properties);
+            setPropertiesCommand.execute();
+
         }
 
-        if (selectedShape.getState() instanceof PEllipse || selectedShape.getState() instanceof PRectangle)
-        {
+        if (selectedShape.getState() instanceof PEllipse || selectedShape.getState() instanceof PRectangle) {
 
             width = (x - selectedShape.getProperties().get("x"));
             height = (y - selectedShape.getProperties().get("y"));
 
-            selectedShape.resize(MyCanvas, width, height);
+            Map<String, Double> properties = new HashMap<>(selectedShape.getProperties());
+            properties.replace("width", width);
+            properties.replace("height", height);
+
+            SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(selectedShape, properties);
+            setPropertiesCommand.execute();
+
         }
+
         if(selectedShape.getState() instanceof PTriangle
                 || selectedShape.getState() instanceof PHexagon
-                || selectedShape.getState() instanceof PPentagon)
-        {
+                || selectedShape.getState() instanceof PPentagon) {
 
-            width = (x - selectedShape.oldX)*2;
-            height = (y - selectedShape.oldY)*2;
+            width = (x - selectedShape.oldX) * 2;
+            height = (y - selectedShape.oldY) * 2;
 
-            selectedShape.getProperties().replace("x", selectedShape.oldX+height/2);
-            selectedShape.getProperties().replace("y", selectedShape.oldY+height/2);
-            selectedShape.resize(MyCanvas, width, height);
+            Map<String, Double> properties = new HashMap<>(selectedShape.getProperties());
+
+            properties.replace("x", selectedShape.oldX + height / 2);
+            properties.replace("y", selectedShape.oldY + height / 2);
+            properties.replace("width", width);
+            properties.replace("height", height);
+
+            SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(selectedShape, properties);
+            setPropertiesCommand.execute();
+
         }
-        if(selectedShape.getState() instanceof PLine)
-        {
+
+        if(selectedShape.getState() instanceof PLine) {
+
             selectedShape.getProperties().replace("x2", x);
             selectedShape.getProperties().replace("y2", y);
             selectedShape.erase(MyCanvas);
@@ -140,24 +156,44 @@ public class Controller implements Initializable {
                 /* Change the cursor shape. */
                 MyCanvas.setCursor(Cursor.CLOSED_HAND);
 
-                
+
                 if(selectedShape.getState() instanceof PTriangle
                         || selectedShape.getState() instanceof PPentagon
-                        || selectedShape.getState() instanceof PHexagon)
+                        || selectedShape.getState() instanceof PHexagon) {
 
-                    selectedShape.drag(new Point2D(
+                    /* 1. Instantiate a new SetPositionCommand. */
+                    SetPositionCommand setPositionCommand = new SetPositionCommand(selectedShape, new Point2D(
                             x - selectedShape.getProperties().get("width") / 10,
-                            y - selectedShape.getProperties().get("height") / 10), MyCanvas);
+                            y - selectedShape.getProperties().get("height") / 10));
 
-                if(selectedShape.getState() instanceof PLine)
-                    selectedShape.drag(new Point2D(
+                    /* 2. Execute the request. */
+                    setPositionCommand.execute();
+
+                }
+
+                if(selectedShape.getState() instanceof PLine) {
+
+                    /* 1. Instantiate a new SetPositionCommand. */
+                    SetPositionCommand setPositionCommand = new SetPositionCommand(selectedShape, new Point2D(
                             x - selectedShape.getProperties().get("x2") / 2,
-                            y - selectedShape.getProperties().get("y2") / 2), MyCanvas);
+                            y - selectedShape.getProperties().get("y2") / 2));
 
-                else
-                    selectedShape.drag(new Point2D(
+                    /* 2. Execute the request. */
+                    setPositionCommand.execute();
+
+                }
+
+                else {
+
+                    /* 1. Instantiate a new SetPositionCommand. */
+                    SetPositionCommand setPositionCommand = new SetPositionCommand(selectedShape, new Point2D(
                             x - selectedShape.getProperties().get("width") / 2,
-                            y - selectedShape.getProperties().get("height") / 2), MyCanvas);
+                            y - selectedShape.getProperties().get("height") / 2));
+
+                    /* 2. Execute the request. */
+                    setPositionCommand.execute();
+
+                }
             }
 
             if(MySizeRadioBTN.isSelected() || MyMouseRadioBTN.isSelected()) {
@@ -166,7 +202,9 @@ public class Controller implements Initializable {
                 resizeShape();
             }
 
-            for (Shape current : shapesList) current.draw(MyCanvas);
+            /* Refresh the canvas to reflect the changes. */
+            application.refresh(application.getCanvas());
+
         }
     }
 
@@ -237,22 +275,30 @@ public class Controller implements Initializable {
             newShape.oldX = x;
             newShape.oldY = y;
 
-            newShape.setBackColor(MyBackColorPicker.getValue());
-            newShape.setStrokeColor(MyStrokeColorPicker.getValue());
+            /* Set the fill color. */
+            SetFillColorCommand setFillColorCommand = new SetFillColorCommand(newShape, MyBackColorPicker.getValue());
+            setFillColorCommand.execute();
 
+            /* Set the stroke color. */
+            SetColorCommand setColorCommand = new SetColorCommand(newShape, MyStrokeColorPicker.getValue());
+            setColorCommand.execute();
+
+            /* Set the shape's name in the tree view. */
             newShape.name = newShape.getState().getClass().getName().replace("model.Shapes.P","") + " (" + counter[index]++ + ")";
 
-            shapesList.add(newShape);
-            application.getShapes().add(newShape);
+            /* Add the new shape to the array list. */
+            AddShapeCommand addShapeCommand = new AddShapeCommand(newShape);
+            addShapeCommand.execute();
 
-            TreeItem<String> newItem = new TreeItem<String>(newShape.name);
+            /* Add the new shape to the tree view. */
+            TreeItem<String> newItem = new TreeItem<>(newShape.name);
             root.getChildren().add(newItem);
-
 
             MultipleSelectionModel msm = MyTreeView.getSelectionModel();
             msm.select(MyTreeView.getRow(newItem));
 
             selectedShape = newShape;
+
         }
     }
 
@@ -350,7 +396,6 @@ public class Controller implements Initializable {
             TriangleBTN.setSelected(true);
         }
 
-
         MyMouseRadioBTN.setSelected(true);
     }
 
@@ -358,19 +403,39 @@ public class Controller implements Initializable {
 
         if(selectedShape != null)
         {
-            selectedShape.setBackColor(MyBackColorPicker.getValue());
-            selectedShape.setStrokeColor(MyStrokeColorPicker.getValue());
+
+            /* Set the stroke color. */
+            SetColorCommand setColorCommand = new SetColorCommand(selectedShape, MyBackColorPicker.getValue());
+            setColorCommand.execute();
+
+            /* Set the fill color. */
+            SetFillColorCommand setFillColorCommand = new SetFillColorCommand(selectedShape, MyStrokeColorPicker.getValue());
+            setFillColorCommand.execute();
 
             if(mouseEvent.getSource() == MyOpacitySlider){
 
-                selectedShape.getProperties().replace("opacity", MyOpacitySlider.getValue());
-                selectedShape.erase(MyCanvas);
-                selectedShape.draw(MyCanvas);
+                /* Set the shape properties. */
+                Map<String, Double> properties = new HashMap<>(selectedShape.getProperties());
+                properties.replace("opacity", MyOpacitySlider.getValue());
+
+                SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(selectedShape, properties);
+                setPropertiesCommand.execute();
+
+                /* Refresh the canvas to reflect changes. */
+                application.refresh(application.getCanvas());
             }
+
             if(mouseEvent.getSource() == MyStrokeSlider){
-                selectedShape.getProperties().replace("strokewidth",MyStrokeSlider.getValue());
-                selectedShape.erase(MyCanvas);
-                selectedShape.draw(MyCanvas);
+
+                /* Set the shape properties. */
+                Map<String, Double> properties = new HashMap<>(selectedShape.getProperties());
+                properties.replace("strokewidth", MyStrokeSlider.getValue());
+
+                SetPropertiesCommand setPropertiesCommand = new SetPropertiesCommand(selectedShape, properties);
+                setPropertiesCommand.execute();
+
+                /* Refresh the canvas to reflect changes. */
+                application.refresh(application.getCanvas());
             }
         }
     }
@@ -387,14 +452,25 @@ public class Controller implements Initializable {
             /* 2. Execute the command. */
             removeShapeCommand.execute();
 
-            /* 3. Push the command onto the undo stack. */
-            application.pushCommand(removeShapeCommand);
-
-            /* 4. Refresh the canvas. */
+            /* 3. Refresh the canvas. */
             application.refresh(application.getCanvas());
         }
 
         // System.out.println("AFTER: " + application.getShapes().toString()); // DEBUG
+
+    }
+
+    public void saveClicked() {
+
+        application.setSaveNLoadStrategy(new XmlStrategy()); // XMLStrategy for testing, the user should choose the method
+        application.save("drawing.xml"); // drawing.xml for testing, the user should choose the file
+
+    }
+
+    public void loadClicked() {
+
+        application.setSaveNLoadStrategy(new XmlStrategy()); // XMLStrategy for testing, the user should choose the method
+        application.load("drawing.xml");// drawing.xml for testing, the user should choose the file
 
     }
 

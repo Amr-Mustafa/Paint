@@ -25,39 +25,6 @@ public class Application implements IDrawingEngine {
 
     private Canvas canvas;
 
-    private static URL[] classPath;
-
-    static {
-        try {
-            classPath = new URL[] {new URL("file:///C:\\Users\\amrmu\\Paint\\src\\plugins\\cylinder.jar")};
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
-
-    public void loadPlugin (String pluginName) {
-
-        URLClassLoader classLoader = new URLClassLoader(classPath);
-
-        Class loadedShape = null;
-
-        try {
-            loadedShape = classLoader.loadClass(pluginName);
-        } catch (Exception ex) {
-            System.out.println("Exception: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-
-        IShape shape = null;
-        try {
-            shape = (IShape) loadedShape.newInstance();
-        } catch (Exception ex) {
-            System.out.println("Exception: " + ex.getMessage());
-       }
-
-        System.out.println(shape.toString());
-    }
-
     /* List of all the shapes drawn on the canvas. */
     private ArrayList<Shape> shapes;
 
@@ -65,7 +32,7 @@ public class Application implements IDrawingEngine {
     private TreeView<String> treeView;
 
     /* XmlStrategy or JsonStrategy. */
-    ISaveNLoadStrategy saveNLoadstrategy;
+    private ISaveNLoadStrategy saveNLoadStrategy;
 
     private Stack<Command> undoStack;
     private Stack<Command> redoStack;
@@ -96,8 +63,8 @@ public class Application implements IDrawingEngine {
      * Sets the saveNLoadstrategy as chosen by the user.
      * @param saveNLoadstrategy
      */
-    public void setSaveNLoadstrategy (ISaveNLoadStrategy saveNLoadstrategy) {
-        this.saveNLoadstrategy = saveNLoadstrategy;
+    public void setSaveNLoadStrategy (ISaveNLoadStrategy saveNLoadStrategy) {
+        this.saveNLoadStrategy = saveNLoadStrategy;
     }
 
     /**
@@ -110,7 +77,6 @@ public class Application implements IDrawingEngine {
 
     public void pushCommand (Command command) {
         this.undoStack.push(command);
-
     }
 
     /**
@@ -233,7 +199,7 @@ public class Application implements IDrawingEngine {
      * @param path
      */
     public void save (String path) {
-        this.saveNLoadstrategy.save(path);
+        this.saveNLoadStrategy.save(path);
     }
 
     /**
@@ -241,7 +207,7 @@ public class Application implements IDrawingEngine {
      * @param path
      */
     public void load (String path) {
-        this.saveNLoadstrategy.load(path);
+        this.saveNLoadStrategy.load(path);
     }
 
     /**
