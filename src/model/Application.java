@@ -1,6 +1,7 @@
 package model;
 
 import com.thoughtworks.xstream.mapper.Mapper;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import model.Shapes.IShape;
 import model.commands.UpdateShapeCommand;
@@ -157,10 +158,18 @@ public class Application implements IDrawingEngine {
         GraphicsContext graphicsContext = ((Canvas)canvas).getGraphicsContext2D();
         graphicsContext.clearRect(0,0,564,200);
 
-        /* 2. Draw all shapes. */
+        /* 2. Draw all shapes from the shapes list. */
         for (Shape shape : shapes) {
             DrawCommand drawCommand = new DrawCommand(shape.getState());
             drawCommand.execute();
+        }
+
+        //if ()
+        /* 3. Refill the tree view. */
+        //treeView.getRoot().getChildren().clear();
+        for (Shape shape : shapes) {
+            TreeItem<String> newItem = new TreeItem<>(shape.name);
+            treeView.getRoot().getChildren().add(newItem);
         }
 
     }
