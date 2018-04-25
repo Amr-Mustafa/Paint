@@ -28,7 +28,7 @@ public class Main extends Application {
 //        file.showSaveDialog(primaryStage);
         Parent root = FXMLLoader.load(getClass().getResource("/view/sample.fxml"));
         primaryStage.setTitle("Hello World");
-        primaryStage.setScene(new Scene(root, 600, 400));
+        primaryStage.setScene(new Scene(root, 800, 400));
         primaryStage.show();
     }
 

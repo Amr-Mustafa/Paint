@@ -19,6 +19,7 @@ public class Shape {
 
     private IShape currentState;
     public String name;
+    public String groupName;
 
     public double oldX;
     public double oldY;

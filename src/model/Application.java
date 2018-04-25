@@ -1,6 +1,7 @@
 package model;
 
 import com.thoughtworks.xstream.mapper.Mapper;
+import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import model.Shapes.IShape;
@@ -62,7 +63,7 @@ public class Application implements IDrawingEngine {
 
     /**
      * Sets the saveNLoadstrategy as chosen by the user.
-     * @param saveNLoadstrategy
+     * @param saveNLoadStrategy
      */
     public void setSaveNLoadStrategy (ISaveNLoadStrategy saveNLoadStrategy) {
         this.saveNLoadStrategy = saveNLoadStrategy;
@@ -164,13 +165,12 @@ public class Application implements IDrawingEngine {
             drawCommand.execute();
         }
 
-        //if ()
         /* 3. Refill the tree view. */
-        //treeView.getRoot().getChildren().clear();
-        for (Shape shape : shapes) {
-            TreeItem<String> newItem = new TreeItem<>(shape.name);
-            treeView.getRoot().getChildren().add(newItem);
-        }
+//        treeView.getRoot().getChildren().clear();
+//        for (Shape shape : shapes) {
+//            TreeItem<String> item = new TreeItem<>(shape.name);
+//            treeView.getRoot().getChildren().add(item);
+//        }
 
     }
 

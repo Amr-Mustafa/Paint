@@ -1,6 +1,9 @@
 <component name="libraryTable">
   <library name="lib">
-    <CLASSES />
+    <CLASSES>
+      <root url="jar://C:/stax-api-1.0.1.jar!/" />
+      <root url="jar://C:/jettison-1.3.7.jar!/" />
+    </CLASSES>
     <JAVADOC />
     <SOURCES />
   </library>

@@ -1,5 +1,10 @@
 package controller;
 
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import model.Application;
 import model.Shape;
 import model.Shapes.*;
@@ -10,6 +15,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import model.commands.*;
+import model.save.JsonStrategy;
 import model.save.XmlStrategy;
 
 import java.io.File;
@@ -41,15 +47,23 @@ public class Controller implements Initializable {
     public TreeView <String> MyTreeView;
 
     private TreeItem<String> root = new TreeItem<String>("Paint");
+    private List<MenuItem> groupsList = new ArrayList<>();
 
-    private int []counter = new int[8];
+
+    private int[] counter = new int[8];
+    private int groupsCounter = 1;
 
     private double x, y;
 
     private Shape selectedShape = null;
+    private Shape newShape = null;
+
+    private ContextMenu contextMenu = new ContextMenu();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        contextMenu.setOnAction(this::contextMenu_Click);
 
         /* Set the canvas reference in the application singleton. */
         application.setCanvas(MyCanvas);
@@ -131,20 +145,120 @@ public class Controller implements Initializable {
         }
     }
 
+    private int retrieveSelectedShape(){
+
+        if(CircleBTN.isSelected()){
+            newShape = new Shape(new PCircle(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return  0;
+        }
+
+        if(EllipseBTN.isSelected()){
+            newShape = new Shape(new PEllipse(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return 1;
+        }
+
+        if(RectangleBTN.isSelected()){
+            newShape = new Shape(new PRectangle(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return 2;
+        }
+
+        if(SquareBTN.isSelected()){
+            newShape = new Shape(new PSquare(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return 3;
+        }
+
+        if(LineBTN.isSelected()){
+            newShape = new Shape(new PLine(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return 4;
+        }
+
+        if(PolygonBTN.isSelected()){
+            newShape = new Shape(new PHexagon(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return 5;
+        }
+
+        if(TriangleBTN.isSelected()) {
+            newShape = new Shape(new PTriangle(x, y, 0, 0, MyOpacitySlider.getValue(),
+                    MyStrokeSlider.getValue()));
+
+            return 6;
+        }
+
+        return -1;
+    }
+
+    private void initializeSelectedShape(int index){
+
+        newShape.oldX = x;
+        newShape.oldY = y;
+
+        newShape.getProperties().replace("width", 10.0);
+        newShape.getProperties().replace("height", 10.0);
+
+        newShape.setBackColor(MyBackColorPicker.getValue());
+        newShape.setStrokeColor(MyStrokeColorPicker.getValue());
+
+        newShape.name = newShape.getState().getClass().getName().replace("M.Shapes.P","") + " (" + counter[index]++ + ")";
+    }
+
+    private void removeShape(TreeItem<String> selectedItem){
+
+        /* remove shape from shapesList */
+        for (Shape shape: application.getShapes())
+            if (shape.name.equals(selectedItem.getValue())) {
+
+                RemoveShapeCommand removeShapeCommand = new RemoveShapeCommand(shape);
+                removeShapeCommand.execute();
+                application.refresh(application.getCanvas());
+
+                break;
+            }
+    }
+
+    private void removeGroup(TreeItem<String> selectedItem) {
+
+        for (MenuItem current : groupsList) {
+
+            if (current.getText().equals(selectedItem.getValue())) {
+
+                RemoveGroupCommand removeGroupCommand = new RemoveGroupCommand(selectedItem.getValue());
+                removeGroupCommand.execute();
+
+                application.refresh(application.getCanvas());
+
+                selectedItem.getParent().getChildren().remove(selectedItem);
+                contextMenu.getItems().remove(current);
+                groupsList.remove(current);
+                break;
+            }
+        }
+    }
+
     public void MyCanvas_Drag(MouseEvent mouseEvent) {
 
         /* Get the cursor's coordinates. */
         x = mouseEvent.getX();
         y = mouseEvent.getY();
 
-        if (selectedShape != null) {
+        TreeItem<String> selectedItem = MyTreeView.getSelectionModel().getSelectedItem();
 
-            /* Get the name of the selected shape from the tree view. */
-            String selectedShapeName = MyTreeView.getSelectionModel().getSelectedItem().getValue();
+        if (!selectedItem.getValue().contains("Group")){
 
             /* Get a reference to the selected shape. */
             for (Shape current : application.getShapes()) {
-                if (current.name.trim().equals(selectedShapeName)) {
+                if (current.name.trim().equals(selectedItem.getValue())) {
                     selectedShape = current;
                     break;
                 }
@@ -442,21 +556,11 @@ public class Controller implements Initializable {
 
     public void Delete_Click() {
 
-        // System.out.println("BEFORE: " + application.getShapes().toString()); // DEBUG
+        TreeItem<String> selectedItem = MyTreeView.getSelectionModel().getSelectedItem();
 
-        if (selectedShape != null)
-        {
-            /* 1. Instantiate a new RemoveShapeCommand object. */
-            RemoveShapeCommand removeShapeCommand = new RemoveShapeCommand(selectedShape);
-
-            /* 2. Execute the command. */
-            removeShapeCommand.execute();
-
-            /* 3. Refresh the canvas. */
-            application.refresh(application.getCanvas());
-        }
-
-        // System.out.println("AFTER: " + application.getShapes().toString()); // DEBUG
+        if(!application.getShapes().isEmpty() || !groupsList.isEmpty())
+            if(selectedItem.getValue().contains("Group")) removeGroup(selectedItem);
+            else removeShape(selectedItem);
 
     }
 
@@ -472,6 +576,103 @@ public class Controller implements Initializable {
         application.setSaveNLoadStrategy(new XmlStrategy()); // XMLStrategy for testing, the user should choose the method
         application.load("drawing.xml");// drawing.xml for testing, the user should choose the file
 
+        application.getTreeView().getRoot().getChildren().clear();
+        for (Shape shape : application.getShapes()) {
+            TreeItem<String> item = new TreeItem<>(shape.name);
+            application.getTreeView().getRoot().getChildren().add(item);
+        }
+    }
+
+    public void MyTreeView_Click(MouseEvent mouseEvent) {
+
+        if (!application.getShapes().isEmpty())
+        {
+            if(!MyTreeView.getSelectionModel().getSelectedItem().getValue().contains("Group"))
+            {
+                if (mouseEvent.getButton() == MouseButton.SECONDARY)
+                {
+                    /* set contextMenu position & show it */
+                    contextMenu.show(MyTreeView, mouseEvent.getScreenX(), mouseEvent.getScreenY());
+                }
+                else contextMenu.hide();
+            }
+            else contextMenu.hide();
+        }
+    }
+
+    //new read all comments and to the end
+    private void contextMenu_Click(ActionEvent event) {
+
+        /* retrieve group & shape name */
+        String groupName = ((MenuItem)event.getTarget()).getText();
+        TreeItem<String> selectedItem = MyTreeView.getSelectionModel().getSelectedItem();
+
+        /* search for the shape in the shapesList & assign groupName to it */
+        for(Shape shape: application.getShapes())
+            if (shape.name.equals(selectedItem.getValue()))
+            {
+                shape.groupName = groupName;
+                break;
+            }
+
+
+        /* remove shape from old node in the treeView */
+        selectedItem.getParent().getChildren().remove(selectedItem);
+
+
+        /* search for the group in the treeView & add the shape as sub treeItem */
+        for (TreeItem<String> treeItem: root.getChildren())
+            if (treeItem.getValue().equals(groupName))
+            {
+                treeItem.getChildren().add(selectedItem);
+                break;
+            }
+    }
+
+    //new read all comments and to the end
+    public void CreateGroup_Click(MouseEvent mouseEvent) {
+
+        /* create a MenuItem that holds group name */
+        MenuItem item = new MenuItem("Group " + "(" + groupsCounter++ + ")");
+
+        /* add the group to the treeview
+        & groups list (Arraylist<MenuItem> groups)
+        & context menu */
+
+        root.getChildren().add(new TreeItem<>(item.getText()));
+        contextMenu.getItems().add(item);
+        groupsList.add(item);
+    }
+
+    //new read all comments and to the end
+    public void MyPane_Press(KeyEvent keyEvent) {
+
+        if(!application.getShapes().isEmpty() && MyHandRadioBTN.isSelected())
+        {
+            TreeItem<String> selectedItem = MyTreeView.getSelectionModel().getSelectedItem();
+
+            if (selectedItem.getValue().contains("Group"))
+            {
+
+                if(keyEvent.getCode()== KeyCode.UP)
+                    application.getShapes().forEach(shape -> { if (shape.groupName.equals(selectedItem.getValue()))
+                        shape.getProperties().replace("y", shape.getProperties().get("y") + 1); });
+
+                if(keyEvent.getCode()==KeyCode.DOWN)
+                    application.getShapes().forEach(shape -> { if (shape.groupName.equals(selectedItem.getValue()))
+                        shape.getProperties().replace("y", shape.getProperties().get("y") - 1); });
+
+                if(keyEvent.getCode()==KeyCode.LEFT)
+                    application.getShapes().forEach(shape -> { if (shape.groupName.equals(selectedItem.getValue()))
+                        shape.getProperties().replace("x", shape.getProperties().get("x") + 1); });
+
+                if(keyEvent.getCode()==KeyCode.RIGHT)
+                    application.getShapes().forEach(shape -> { if (shape.groupName.equals(selectedItem.getValue()))
+                        shape.getProperties().replace("x", shape.getProperties().get("x") - 1); });
+
+                application.refresh(application.getCanvas());
+            }
+        }
     }
 
 }
